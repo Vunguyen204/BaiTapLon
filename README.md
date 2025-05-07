@@ -18,5 +18,5 @@ Một trình crawler siêu nhẹ giúp tự động thu thập tin tức bóng �
 1. **Clone repo**
 
 ```bash
-git clone https://github.com/<your-username>/kenh14-bongda-crawler.git
+git clone https://github.com/Vunguyen204/BaiTapLon.git
 cd kenh14-bongda-crawler
