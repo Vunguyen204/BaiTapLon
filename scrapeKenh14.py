@@ -29,7 +29,7 @@ def scrape_news():
     element_a.click()
     # 5. Lấy tất cả dữ liệu của các trang.
     links=set()
-    while len(links) < 100:     # giới hạn tránh loop vô hạn
+    while len(links) < 100:    # Vì trang Kênh 14 xem thêm vô hạn nên em giới hạn 100 bài viết
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         time.sleep(5)
         try:
