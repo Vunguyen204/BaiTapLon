@@ -1,62 +1,121 @@
-import requests
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import time
+from datetime import datetime
 from bs4 import BeautifulSoup
 import pandas as pd
 import schedule
-import time
-from datetime import datetime
+import os
 
+# 3. Bấm tìm kiếm(nếu trang web tin tức không có Button tìm kiếm thì có thể bỏ qua).
 def scrape_news():
-    response = requests.get("https://kenh14.vn/sport/bong-da.chn/")
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.content, "html.parser")
-        news = soup.find_all("h3", class_="ktncli-title")
+    # Cấu hình trình duyệt không giao diện
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")  # không hiển thị trình duyệt
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    # 1. Vào website đã chọn.
+    driver = webdriver.Chrome(options=chrome_options)
+    driver.get("https://kenh14.vn")
+    
+    # 2. Click chọn một mục tin tức bất kì(Đời sống).
+    a_selector = '#k14-main-menu-wrapper > div > div > ul > li:nth-child(6) > a'
+    element_a = WebDriverWait(driver, 20).until(
+        EC.element_to_be_clickable((By.CSS_SELECTOR, a_selector))
+    )
+    element_a.click()
+    # 5. Lấy tất cả dữ liệu của các trang.
+    links=set()
+    while len(links) < 100:     # giới hạn tránh loop vô hạn
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(5)
+        try:
+            while True:
+                moreButton = WebDriverWait(driver, 5).until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, "#lastPage > div.view-more-detail.clearboth > a"))
+                )
+                moreButton.click()
+                time.sleep(3)
+        except:
+            print("Không tìm thấy nút 'Xem thêm' hoặc đã load hết bài viết!")
         
-        links=[]
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        news = soup.find_all("h3", class_="ktncli-title") + soup.find_all("h3", class_="knswli-title")
         for link in news:
             try:
                 url = link.find('a').attrs['href']
                 if url.startswith("/"):
                     url = "https://kenh14.vn" + url
-                links.append(url)
+                links.add(url)
+                if len(links) >= 100:
+                    break
             except:
                 continue
-        
-        data =  []
-        for link in links:
+    # 4. Lấy tất cả dữ liệu(Tiêu đề, Mô tả, Hình ảnh, Nội dung bài viết) hiển thị ở bài viết.
+    data =  []
+    for link in links:
+        try:
+            driver.get(link)
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "kbwc-title"))
+            )
+            soup = BeautifulSoup(driver.page_source, "html.parser")
+            title = soup.find("h1", class_="kbwc-title").text.strip()
+            summary = soup.find("h2", class_="knc-sapo").text.strip()
+            body = soup.find("div", class_="knc-content")
             try:
-                news = requests.get(link)
-                soup = BeautifulSoup(news.content, "html.parser")
-                title = soup.find("h1", class_="kbwc-title").text.strip()
-                summary = soup.find("h2", class_="knc-sapo").text.strip()
-                body = soup.find("div", class_="knc-content")
-                try:
-                    content = body.decode_contents()
-                except:
-                    content = ""
-                    
-                try:
-                    image = soup.find("img", class_="VCSortableInPreviewMode")
-                    if image:
-                        image = image.get('data-original') or image.get('src')
+                content = body.decode_contents()
+            except:
+                content = ""
+                
+            try:
+                figure = soup.find("figure", class_="VCSortableInPreviewMode")
+                if figure:
+                    img_tag = figure.find("img")
+                    if img_tag:
+                        image = img_tag.get("data-original") or img_tag.get("src") or ""
                     else:
                         image = ""
-                except:
+                else:
                     image = ""
-                    
-                item = [title, summary, content, image]
-                data.append(item)
-            except Exception as e:
-                print(f"Lỗi khi xử lý bài: {link} | {e}")
-                continue
-            
-        df = pd.DataFrame(data, columns=["Title", "Summary", "Content", "Image"])
-        fileName = f"kenh14_bongda_{datetime.now().strftime('%Y%m%d')}.xlsx"
-        df.to_excel(fileName, index=False, encoding='utf-8-sig')
-        print("Đã lưu dữ liệu vào file: outputKenh14.xlsx")
+            except:
+                image = ""
+
+                
+            item = [title, summary, content, image]
+            data.append(item)
+        except Exception as e:
+            print(f"Lỗi khi xử lý bài: {link} | {e}")
+            continue
         
+    driver.quit()
+    
+    # 6. Lưu dữ liệu đã lấy được vào file excel hoặc csv.
+    folder = "dataKenh14"
+    os.makedirs(folder, exist_ok=True)    
+    fileName = os.path.join(folder, f"kenh14_doisong_{datetime.now().strftime('%Y%m%d')}.xlsx")
+    df = pd.DataFrame(data, columns=["Title", "Summary", "Content", "Image"])
+    df.to_csv(fileName, index=False, encoding='utf-8-sig')
+    print(f"Đã lưu dữ liệu vào file: {fileName}")
+
+# 7. Set lịch chạy vào lúc 6h sáng hằng ngày.
 schedule.every().day.at("06:00").do(scrape_news)
 
 print("Đang đợi để scrape tin tức...")
 while True:
     schedule.run_pending()
     time.sleep(60)
+
+# 8. Tạo project github chế độ public.
+    # https://github.com/Vunguyen204/BaiTapLon.git
+# 10. Push(file code, README.md, requirements.txt) lên project và nộp link project github vào classroom.
+    # Git init
+    # Git remote add origin hhttps://github.com/Vunguyen204/BaiTapLon.git
+    # Git add .
+    # Git commit -m "Thông điệp commit"
+    # Git push -u origin main
+
+    

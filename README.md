@@ -1,22 +1,28 @@
-# Kenh14.vn Bóng Đá Crawler
+<!--  9. Viết file README.md hướng dẫn cài đặt cho project github đầy đủ rõ ràng. -->
+# Crawler Kenh14.vn - Chuyên mục Đời Sống
 
-Một trình crawler siêu nhẹ giúp tự động thu thập tin tức bóng đá từ chuyên mục `https://kenh14.vn/sport/bong-da.chn/` mỗi ngày vào lúc 6h sáng và lưu vào file Excel.
+Đây là một chương trình web scraper sử dụng **Selenium** và **BeautifulSoup** để thu thập tin tức từ chuyên mục Đời sống của trang web **Kenh14.vn**. Các bài viết được thu thập bao gồm tiêu đề, tóm tắt, nội dung và ảnh. Dữ liệu sau đó sẽ được lưu vào file **CSV**.
 
----
+## Các tính năng:
+- Tự động tải trang, cuộn xuống và click vào nút "Xem thêm" để tải tối đa 100 bài viết.
+- Trích xuất dữ liệu bao gồm:
+  - Tiêu đề bài viết
+  - Tóm tắt bài viết
+  - Nội dung bài viết
+  - Hình ảnh (nếu có)
+- Lưu dữ liệu vào file CSV với encoding đúng để hỗ trợ tiếng Việt (UTF-8-SIG).
+- Lịch trình tự động chạy mỗi ngày lúc **6h sáng** để thu thập tin tức mới.
 
-## Tính năng
+## Các bước cài đặt
 
-- Tự động truy cập Kenh14 chuyên mục Bóng Đá
-- Lấy thông tin: **Tiêu đề**, **Mô tả**, **Hình ảnh**, **Nội dung bài viết**
-- Lưu dữ liệu vào file `.xlsx` với tên dạng `kenh14_bongda_YYYYMMDD.xlsx`
-- Tự động chạy lúc **06:00 sáng mỗi ngày**
-
----
-
-## Cài đặt
-
-1. **Clone repo**
+### 1. Cài đặt thư viện
+Bạn cần cài đặt các thư viện Python sau:
 
 ```bash
+pip install selenium beautifulsoup4 pandas schedule
+```
+
+### 2. Clone repo
+```bash
 git clone https://github.com/Vunguyen204/BaiTapLon.git
-cd kenh14-bongda-crawler
+```
