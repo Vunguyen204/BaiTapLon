@@ -1,6 +1,5 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
@@ -10,15 +9,9 @@ import pandas as pd
 import schedule
 import os
 
-# 3. Bấm tìm kiếm(nếu trang web tin tức không có Button tìm kiếm thì có thể bỏ qua).
 def scrape_news():
-    # Cấu hình trình duyệt không giao diện
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")  # không hiển thị trình duyệt
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
     # 1. Vào website đã chọn.
-    driver = webdriver.Chrome(options=chrome_options)
+    driver = webdriver.Chrome()
     driver.get("https://kenh14.vn")
     
     # 2. Click chọn một mục tin tức bất kì(Đời sống).
@@ -27,9 +20,29 @@ def scrape_news():
         EC.element_to_be_clickable((By.CSS_SELECTOR, a_selector))
     )
     element_a.click()
+    
+    # 3. Bấm tìm kiếm(nếu trang web tin tức không có Button tìm kiếm thì có thể bỏ qua).
+    search_icon = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.CLASS_NAME, "toolbar-search-wrapper"))
+    )
+    search_icon.click() #Click vào icon tìm kiếm
+
+    search_input = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.ID, "searchinput"))
+    )
+    search_input.clear()
+    search_input.send_keys("Việt Nam") #Điền từ khóa tìm kiếm
+    time.sleep(1)
+    
+    search_button = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.CLASS_NAME, "t-search-submit-btn"))
+    )
+    search_button.click() #Click vào nút tìm kiếm
+    time.sleep(2)
+    
     # 5. Lấy tất cả dữ liệu của các trang.
     links=set()
-    while len(links) < 100:    # Vì trang Kênh 14 xem thêm vô hạn nên em giới hạn 100 bài viết
+    while len(links) < 100:    # Vì trang Kênh 14 xem thêm vô hạn nên chỉ lấy giới hạn 100 bài viết
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         time.sleep(5)
         try:
@@ -54,6 +67,7 @@ def scrape_news():
                     break
             except:
                 continue
+            
     # 4. Lấy tất cả dữ liệu(Tiêu đề, Mô tả, Hình ảnh, Nội dung bài viết) hiển thị ở bài viết.
     data =  []
     for link in links:
@@ -96,7 +110,7 @@ def scrape_news():
     # 6. Lưu dữ liệu đã lấy được vào file excel hoặc csv.
     folder = "dataKenh14"
     os.makedirs(folder, exist_ok=True)    
-    fileName = os.path.join(folder, f"kenh14_doisong_{datetime.now().strftime('%Y%m%d')}.xlsx")
+    fileName = os.path.join(folder, f"kenh14_VietNam_{datetime.now().strftime('%Y%m%d')}.csv")
     df = pd.DataFrame(data, columns=["Title", "Summary", "Content", "Image"])
     df.to_csv(fileName, index=False, encoding='utf-8-sig')
     print(f"Đã lưu dữ liệu vào file: {fileName}")
@@ -113,7 +127,7 @@ while True:
     # https://github.com/Vunguyen204/BaiTapLon.git
 # 10. Push(file code, README.md, requirements.txt) lên project và nộp link project github vào classroom.
     # Git init
-    # Git remote add origin hhttps://github.com/Vunguyen204/BaiTapLon.git
+    # Git remote add origin https://github.com/Vunguyen204/BaiTapLon.git
     # Git add .
     # Git commit -m "Thông điệp commit"
     # Git push -u origin main
