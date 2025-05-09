@@ -1,7 +1,7 @@
 <!--  9. Viết file README.md hướng dẫn cài đặt cho project github đầy đủ rõ ràng. -->
 # Crawler Kenh14.vn - Chuyên mục Đời Sống
 
-Đây là một chương trình web scraper sử dụng **Selenium** và **BeautifulSoup** để thu thập tin tức từ chuyên mục Đời sống của trang web **Kenh14.vn**. Các bài viết được thu thập bao gồm tiêu đề, tóm tắt, nội dung và ảnh. Dữ liệu sau đó sẽ được lưu vào file **CSV**.
+Đây là một chương trình web scraper sử dụng **Selenium** và **BeautifulSoup** để thu thập tin tức theo từ khóa "Việt Nam" của trang web **Kenh14.vn**. Các bài viết được thu thập bao gồm tiêu đề, tóm tắt, nội dung và ảnh. Dữ liệu sau đó sẽ được lưu vào file **CSV**.
 
 ## Các tính năng:
 - Tự động tải trang, cuộn xuống và click vào nút "Xem thêm" để tải tối đa 100 bài viết.
